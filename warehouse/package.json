@@ -20,17 +20,17 @@
   },
   "homepage": "https://gitlab.com/wskakovska/protokoly_skakovska#readme",
   "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.6",
     "cors": "^2.8.6",
+    "dotenv": "^16.3.1",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
     "mongodb": "^7.0.0",
     "mongoose": "^9.1.5",
     "mqtt": "^5.14.1",
     "sqlite3": "^5.1.7",
-    "ws": "^8.19.0",
-    "dotenv": "^16.3.1",
-    "cookie-parser": "^1.4.6",
-    "jsonwebtoken": "^9.0.2",
-    "bcrypt": "^5.1.1"
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

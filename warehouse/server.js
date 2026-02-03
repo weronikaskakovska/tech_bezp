@@ -16,7 +16,7 @@ app.use(express.static('public'));
 
 // middleware
 app.use(express.json());
-app.use(express.urlencoded({extended: false})) //otherwise we can't add form url-encoded way
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: true,
   credentials: true
