@@ -1,11 +1,12 @@
+require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
-const mqtt = require("./mqtt");
-const ws = require("./ws");
+const WebSocket = require('ws');
 const mongoose = require('mongoose');
-const Product = require('./models/product.js')
 const cookieParser = require('cookie-parser');
 const http = require('http');
+const logger = require('./middleware/logger');
+const mqttService = require('./services/mqtt');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,7 +17,10 @@ app.use(express.static('public'));
 // middleware
 app.use(express.json());
 app.use(express.urlencoded({extended: false})) //otherwise we can't add form url-encoded way
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(cookieParser());
 app.use(logger);
 
@@ -127,14 +131,8 @@ app.get('/api', (req, res) => {
 
 
 
-// SERVER
-
-app.listen(3000,()=>{
-  console.log("HTTP running");
-});
-
 // mongodb
-mongoose.connect('mongodb+srv://weronikaskakovska_db_user:ZCYr9Bp7PYGslL5I@backenddb.tds5teg.mongodb.net/?appName=backenddb')
+mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log("Connected to database!")
         // mqtt connection

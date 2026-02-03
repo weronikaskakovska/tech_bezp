@@ -1,10 +1,606 @@
-<h1>Warehouse</h1>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Zarządzania Magazynem</title>
+</head>
+<body>
+    <div class="container">
+        <h1>System Zarządzania Magazynem</h1>
+        
+        <div id="loginSection">
+            <h2>Logowanie</h2>
+            <div class="form-group">
+                <label>Username:</label>
+                <input type="text" id="loginUsername" value="admin">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="loginPassword" value="admin123">
+            </div>
+            <button onclick="login()">Zaloguj</button>
+            <button onclick="register()">Zarejestruj</button>
+        </div>
+        
+        <div id="mainSection" style="display: none;">
+            <div class="status info" id="userInfo"></div>
+            <button onclick="logout()" class="btn-danger">Wyloguj</button>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('products')">Produkty</button>
+                <button class="tab" onclick="showTab('orders')">Zamówienia</button>
+                <button class="tab" onclick="showTab('suppliers')">Dostawcy</button>
+                <button class="tab" onclick="showTab('users')">Użytkownicy</button>
+                <button class="tab" onclick="showTab('mqtt')">MQTT/WebSocket</button>
+            </div>
+            
+            <!--products-->
+            <div id="products" class="tab-content active">
+                <h2>Zarządzanie Produktami</h2>
+                
+                <div class="grid">
+                    <div>
+                        <h3>Dodaj Produkt</h3>
+                        <div class="form-group">
+                            <label>Nazwa:</label>
+                            <input type="text" id="productName">
+                        </div>
+                        <div class="form-group">
+                            <label>Opis:</label>
+                            <textarea id="productDescription"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Ilość:</label>
+                            <input type="number" id="productQuantity">
+                        </div>
+                        <div class="form-group">
+                            <label>Cena:</label>
+                            <input type="number" id="productPrice" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Kategoria:</label>
+                            <input type="text" id="productCategory">
+                        </div>
+                        <div class="form-group">
+                            <label>SKU:</label>
+                            <input type="text" id="productSku">
+                        </div>
+                        <button onclick="createProduct()">Dodaj</button>
+                    </div>
+                    
+                    <div>
+                        <h3>Operacje</h3>
+                        <button onclick="getAllProducts()">Pobierz wszystkie</button>
+                        <div class="form-group">
+                            <label>Szukaj (wzorzec):</label>
+                            <input type="text" id="productSearch" placeholder="np. 'es' znajdzie 'piesek'">
+                            <button onclick="searchProducts()">Szukaj</button>
+                        </div>
+                        <div class="form-group">
+                            <label>ID produktu:</label>
+                            <input type="text" id="productId">
+                            <button onclick="getProduct()">Pobierz</button>
+                            <button onclick="updateProduct()">Aktualizuj</button>
+                            <button onclick="deleteProduct()" class="btn-danger">Usuń</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result" id="productResult"></div>
+            </div>
+            
+            <!--orders-->
+            <div id="orders" class="tab-content">
+                <h2>Zarządzanie Zamówieniami</h2>
+                
+                <div class="grid">
+                    <div>
+                        <h3>Dodaj Zamówienie</h3>
+                        <div class="form-group">
+                            <label>Numer zamówienia:</label>
+                            <input type="text" id="orderNumber">
+                        </div>
+                        <div class="form-group">
+                            <label>Klient:</label>
+                            <input type="text" id="orderCustomer">
+                        </div>
+                        <div class="form-group">
+                            <label>Status:</label>
+                            <select id="orderStatus">
+                                <option value="pending">Oczekujące</option>
+                                <option value="processing">Przetwarzane</option>
+                                <option value="shipped">Wysłane</option>
+                                <option value="delivered">Dostarczone</option>
+                                <option value="cancelled">Anulowane</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Całkowita cena:</label>
+                            <input type="number" id="orderTotalPrice" step="0.01">
+                        </div>
+                        <button onclick="createOrder()">Dodaj</button>
+                    </div>
+                    
+                    <div>
+                        <h3>Operacje</h3>
+                        <button onclick="getAllOrders()">Pobierz wszystkie</button>
+                        <div class="form-group">
+                            <label>Szukaj:</label>
+                            <input type="text" id="orderSearch">
+                            <button onclick="searchOrders()">Szukaj</button>
+                        </div>
+                        <div class="form-group">
+                            <label>ID zamówienia:</label>
+                            <input type="text" id="orderId">
+                            <button onclick="getOrder()">Pobierz</button>
+                            <button onclick="updateOrder()">Aktualizuj</button>
+                            <button onclick="deleteOrder()" class="btn-danger">Usuń</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result" id="orderResult"></div>
+            </div>
+            
+            <!--suppliers-->
+            <div id="suppliers" class="tab-content">
+                <h2>Zarządzanie Dostawcami</h2>
+                
+                <div class="grid">
+                    <div>
+                        <h3>Dodaj Dostawcę</h3>
+                        <div class="form-group">
+                            <label>Nazwa:</label>
+                            <input type="text" id="supplierName">
+                        </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" id="supplierEmail">
+                        </div>
+                        <div class="form-group">
+                            <label>Telefon:</label>
+                            <input type="text" id="supplierPhone">
+                        </div>
+                        <div class="form-group">
+                            <label>Adres:</label>
+                            <textarea id="supplierAddress"></textarea>
+                        </div>
+                        <button onclick="createSupplier()">Dodaj</button>
+                    </div>
+                    
+                    <div>
+                        <h3>Operacje</h3>
+                        <button onclick="getAllSuppliers()">Pobierz wszystkie</button>
+                        <div class="form-group">
+                            <label>Szukaj:</label>
+                            <input type="text" id="supplierSearch">
+                            <button onclick="searchSuppliers()">Szukaj</button>
+                        </div>
+                        <div class="form-group">
+                            <label>ID dostawcy:</label>
+                            <input type="text" id="supplierId">
+                            <button onclick="getSupplier()">Pobierz</button>
+                            <button onclick="updateSupplier()">Aktualizuj</button>
+                            <button onclick="deleteSupplier()" class="btn-danger">Usuń</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result" id="supplierResult"></div>
+            </div>
+            
+            <!--users-->
+            <div id="users" class="tab-content">
+                <h2>Zarządzanie Użytkownikami</h2>
+                
+                <div class="grid">
+                    <div>
+                        <h3>Dodaj Użytkownika</h3>
+                        <div class="form-group">
+                            <label>Username:</label>
+                            <input type="text" id="userName">
+                        </div>
+                        <div class="form-group">
+                            <label>Email:</label>
+                            <input type="email" id="userEmail">
+                        </div>
+                        <div class="form-group">
+                            <label>Password:</label>
+                            <input type="password" id="userPassword">
+                        </div>
+                        <div class="form-group">
+                            <label>Rola:</label>
+                            <select id="userRole">
+                                <option value="user">User</option>
+                                <option value="moderator">Moderator</option>
+                                <option value="admin">Admin</option>
+                                <option value="guest">Guest</option>
+                            </select>
+                        </div>
+                        <button onclick="createUser()">Dodaj</button>
+                    </div>
+                    
+                    <div>
+                        <h3>Operacje</h3>
+                        <button onclick="getAllUsers()">Pobierz wszystkie</button>
+                        <div class="form-group">
+                            <label>Szukaj:</label>
+                            <input type="text" id="userSearch">
+                            <button onclick="searchUsers()">Szukaj</button>
+                        </div>
+                        <div class="form-group">
+                            <label>ID użytkownika:</label>
+                            <input type="text" id="userId">
+                            <button onclick="getUser()">Pobierz</button>
+                            <button onclick="deleteUser()" class="btn-danger">Usuń</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="result" id="userResult"></div>
+            </div>
+            
+            <!--MQTT/WebSocket -->
+            <div id="mqtt" class="tab-content">
+                <h2>MQTT i WebSocket</h2>
+                
+                <div class="status info">
+                    <strong>Status WebSocket:</strong> <span id="wsStatus">Rozłączony</span>
+                </div>
+                
+                <div class="form-group">
+                    <label>Temat MQTT:</label>
+                    <input type="text" id="mqttTopic" value="warehouse/alerts">
+                </div>
+                <div class="form-group">
+                    <label>Wiadomość:</label>
+                    <textarea id="mqttMessage">{"message": "Test", "level": "info"}</textarea>
+                </div>
+                <button onclick="sendMQTT()">Wyślij przez MQTT</button>
+                <button onclick="connectWebSocket()">Połącz WebSocket</button>
+                <button onclick="disconnectWebSocket()" class="btn-danger">Rozłącz WebSocket</button>
+                
+                <h3>Powiadomienia w czasie rzeczywistym:</h3>
+                <div class="result" id="mqttResult"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="notifications" id="notifications"></div>
 
-<input id="name">
-<input id="qty">
-<button onclick="add()">Add</button>
-<button onclick="load()">Load</button>
-
-<ul id="list"></ul>
-
-<script src="app.js"></script>
+    <script>
+        let token = '';
+        let ws = null;
+        const API_URL = 'http://localhost:3000/api';
+        
+        //helper functions
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                credentials: 'include'
+            };
+            
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, options);
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+        
+        function showResult(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+        
+        function showNotification(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `notification ${type}`;
+            div.textContent = message;
+            document.getElementById('notifications').appendChild(div);
+            setTimeout(() => div.remove(), 5000);
+        }
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+        
+        // Authorisation
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const result = await apiCall('/auth/login', 'POST', { username, password });
+            
+            if (result.success) {
+                token = result.data.token;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('mainSection').style.display = 'block';
+                document.getElementById('userInfo').textContent = 
+                    `Zalogowano jako: ${result.data.user.username} (${result.data.user.role})`;
+                showNotification('Zalogowano pomyślnie', 'success');
+                connectWebSocket();
+            } else {
+                showNotification('Błąd logowania', 'error');
+            }
+        }
+        
+        async function register() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const result = await apiCall('/auth/register', 'POST', {
+                username,
+                email: `${username}@example.com`,
+                password,
+                role: 'user'
+            });
+            
+            if (result.success) {
+                showNotification('Zarejestrowano pomyślnie. Teraz zaloguj się.', 'success');
+            } else {
+                showNotification('Błąd rejestracji', 'error');
+            }
+        }
+        
+        async function logout() {
+            await apiCall('/auth/logout', 'POST');
+            token = '';
+            document.getElementById('loginSection').style.display = 'block';
+            document.getElementById('mainSection').style.display = 'none';
+            if (ws) ws.close();
+            showNotification('Wylogowano', 'info');
+        }
+        
+        //products
+        async function createProduct() {
+            const product = {
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value,
+                quantity: parseInt(document.getElementById('productQuantity').value),
+                price: parseFloat(document.getElementById('productPrice').value),
+                category: document.getElementById('productCategory').value,
+                sku: document.getElementById('productSku').value
+            };
+            
+            const result = await apiCall('/products', 'POST', product);
+            showResult('productResult', result.data);
+            if (result.success) showNotification('Produkt dodany', 'success');
+        }
+        
+        async function getAllProducts() {
+            const result = await apiCall('/products');
+            showResult('productResult', result.data);
+        }
+        
+        async function getProduct() {
+            const id = document.getElementById('productId').value;
+            const result = await apiCall(`/products/${id}`);
+            showResult('productResult', result.data);
+        }
+        
+        async function searchProducts() {
+            const pattern = document.getElementById('productSearch').value;
+            const result = await apiCall(`/products/search/${pattern}`);
+            showResult('productResult', result.data);
+        }
+        
+        async function updateProduct() {
+            const id = document.getElementById('productId').value;
+            const product = {
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value,
+                quantity: parseInt(document.getElementById('productQuantity').value),
+                price: parseFloat(document.getElementById('productPrice').value),
+                category: document.getElementById('productCategory').value
+            };
+            
+            const result = await apiCall(`/products/${id}`, 'PUT', product);
+            showResult('productResult', result.data);
+            if (result.success) showNotification('Produkt zaktualizowany', 'success');
+        }
+        
+        async function deleteProduct() {
+            const id = document.getElementById('productId').value;
+            const result = await apiCall(`/products/${id}`, 'DELETE');
+            showResult('productResult', result.data);
+            if (result.success) showNotification('Produkt usunięty', 'success');
+        }
+        
+        //orders
+        async function createOrder() {
+            const order = {
+                orderNumber: document.getElementById('orderNumber').value,
+                customer: document.getElementById('orderCustomer').value,
+                status: document.getElementById('orderStatus').value,
+                totalPrice: parseFloat(document.getElementById('orderTotalPrice').value),
+                products: []
+            };
+            
+            const result = await apiCall('/orders', 'POST', order);
+            showResult('orderResult', result.data);
+            if (result.success) showNotification('Zamówienie dodane', 'success');
+        }
+        
+        async function getAllOrders() {
+            const result = await apiCall('/orders');
+            showResult('orderResult', result.data);
+        }
+        
+        async function getOrder() {
+            const id = document.getElementById('orderId').value;
+            const result = await apiCall(`/orders/${id}`);
+            showResult('orderResult', result.data);
+        }
+        
+        async function searchOrders() {
+            const pattern = document.getElementById('orderSearch').value;
+            const result = await apiCall(`/orders/search/${pattern}`);
+            showResult('orderResult', result.data);
+        }
+        
+        async function updateOrder() {
+            const id = document.getElementById('orderId').value;
+            const order = {
+                status: document.getElementById('orderStatus').value
+            };
+            
+            const result = await apiCall(`/orders/${id}`, 'PUT', order);
+            showResult('orderResult', result.data);
+            if (result.success) showNotification('Zamówienie zaktualizowane', 'success');
+        }
+        
+        async function deleteOrder() {
+            const id = document.getElementById('orderId').value;
+            const result = await apiCall(`/orders/${id}`, 'DELETE');
+            showResult('orderResult', result.data);
+            if (result.success) showNotification('Zamówienie usunięte', 'success');
+        }
+        
+        //suppliers
+        async function createSupplier() {
+            const supplier = {
+                name: document.getElementById('supplierName').value,
+                email: document.getElementById('supplierEmail').value,
+                phone: document.getElementById('supplierPhone').value,
+                address: document.getElementById('supplierAddress').value
+            };
+            
+            const result = await apiCall('/suppliers', 'POST', supplier);
+            showResult('supplierResult', result.data);
+            if (result.success) showNotification('Dostawca dodany', 'success');
+        }
+        
+        async function getAllSuppliers() {
+            const result = await apiCall('/suppliers');
+            showResult('supplierResult', result.data);
+        }
+        
+        async function getSupplier() {
+            const id = document.getElementById('supplierId').value;
+            const result = await apiCall(`/suppliers/${id}`);
+            showResult('supplierResult', result.data);
+        }
+        
+        async function searchSuppliers() {
+            const pattern = document.getElementById('supplierSearch').value;
+            const result = await apiCall(`/suppliers/search/${pattern}`);
+            showResult('supplierResult', result.data);
+        }
+        
+        async function updateSupplier() {
+            const id = document.getElementById('supplierId').value;
+            const supplier = {
+                name: document.getElementById('supplierName').value,
+                email: document.getElementById('supplierEmail').value,
+                phone: document.getElementById('supplierPhone').value,
+                address: document.getElementById('supplierAddress').value
+            };
+            
+            const result = await apiCall(`/suppliers/${id}`, 'PUT', supplier);
+            showResult('supplierResult', result.data);
+            if (result.success) showNotification('Dostawca zaktualizowany', 'success');
+        }
+        
+        async function deleteSupplier() {
+            const id = document.getElementById('supplierId').value;
+            const result = await apiCall(`/suppliers/${id}`, 'DELETE');
+            showResult('supplierResult', result.data);
+            if (result.success) showNotification('Dostawca usunięty', 'success');
+        }
+        
+        //users
+        async function createUser() {
+            const user = {
+                username: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                password: document.getElementById('userPassword').value,
+                role: document.getElementById('userRole').value
+            };
+            
+            const result = await apiCall('/auth/register', 'POST', user);
+            showResult('userResult', result.data);
+            if (result.success) showNotification('Użytkownik dodany', 'success');
+        }
+        
+        async function getAllUsers() {
+            const result = await apiCall('/users');
+            showResult('userResult', result.data);
+        }
+        
+        async function getUser() {
+            const id = document.getElementById('userId').value;
+            const result = await apiCall(`/users/${id}`);
+            showResult('userResult', result.data);
+        }
+        
+        async function searchUsers() {
+            const pattern = document.getElementById('userSearch').value;
+            const result = await apiCall(`/users/search/${pattern}`);
+            showResult('userResult', result.data);
+        }
+        
+        async function deleteUser() {
+            const id = document.getElementById('userId').value;
+            const result = await apiCall(`/users/${id}`, 'DELETE');
+            showResult('userResult', result.data);
+            if (result.success) showNotification('Użytkownik usunięty', 'success');
+        }
+        
+        //WebSocket
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:3000');
+            
+            ws.onopen = () => {
+                document.getElementById('wsStatus').textContent = 'Połączony ✓';
+                showNotification('WebSocket połączony', 'success');
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const mqttResult = document.getElementById('mqttResult');
+                const message = `<div class="status info">
+                    <strong>${data.type}:</strong><br>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>`;
+                mqttResult.innerHTML = message + mqttResult.innerHTML;
+                
+                showNotification(`WebSocket: ${data.type}`, 'info');
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('wsStatus').textContent = 'Rozłączony ✗';
+                showNotification('WebSocket rozłączony', 'error');
+            };
+        }
+        
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close();
+            }
+        }
+        
+        async function sendMQTT() {
+            const topic = document.getElementById('mqttTopic').value;
+            const message = JSON.parse(document.getElementById('mqttMessage').value);
+            
+            const result = await apiCall('/mqtt/test', 'POST', { topic, message });
+            showResult('mqttResult', result.data);
+            if (result.success) showNotification('Wiadomość MQTT wysłana', 'success');
+        }
+    </script>
+</body>
+</html>
