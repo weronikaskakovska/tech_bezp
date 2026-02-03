@@ -2,7 +2,7 @@
   "name": "protokoly_skakovska",
   "version": "1.0.0",
   "description": "To make it easy for you to get started with GitLab, here's a list of recommended next steps.",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
@@ -26,7 +26,11 @@
     "mongoose": "^9.1.5",
     "mqtt": "^5.14.1",
     "sqlite3": "^5.1.7",
-    "ws": "^8.19.0"
+    "ws": "^8.19.0",
+    "dotenv": "^16.3.1",
+    "cookie-parser": "^1.4.6",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
