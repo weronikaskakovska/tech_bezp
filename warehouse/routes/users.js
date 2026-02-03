@@ -1,89 +1,90 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, roleMiddleware } = require('../middleware/auth');
 
-// Register
-router.post('/register', async (req, res) => {
-  try {
-    const { username, email, password, role } = req.body;
-    
-    const user = new User({
-      username,
-      email,
-      password,
-      role: role || 'user'
-    });
-    
-    await user.save();
-    
-    res.status(201).json({ 
-      message: 'Użytkownik zarejestrowany',
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+// CREATE - rejestration in auth.js
 
-// Log in
-router.post('/login', async (req, res) => {
+// READ-all (only admin)
+router.get('/', authMiddleware, roleMiddleware('admin'), async (req, res) => {
   try {
-    const { username, password } = req.body;
-    
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(401).json({ error: 'Nieprawidłowe dane logowania' });
-    }
-    
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Nieprawidłowe dane logowania' });
-    }
-    
-    const token = jwt.sign(
-      { id: user._id, username: user.username, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-    
-    // Setting cookies with token
-    res.cookie('token', token, {
-      httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24h
-    });
-    
-    res.json({
-      message: 'Zalogowano pomyślnie',
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        role: user.role
-      }
-    });
+    const users = await User.find().select('-password');
+    res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Log out
-router.post('/logout', authMiddleware, (req, res) => {
-  res.clearCookie('token');
-  res.json({ message: 'Wylogowano pomyślnie' });
+// READ - one
+router.get('/:id', authMiddleware, async (req, res) => {
+  try {
+    // User can only see himself, unless he is admin
+    if (req.user.id !== req.params.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Brak uprawnień' });
+    }
+    
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-// Checking logged in user
-router.get('/me', authMiddleware, async (req, res) => {
+// SEARCH (only admin)
+router.get('/search/:pattern', authMiddleware, roleMiddleware('admin'), async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const pattern = req.params.pattern;
+    const users = await User.find({
+      $or: [
+        { username: { $regex: pattern, $options: 'i' } },
+        { email: { $regex: pattern, $options: 'i' } }
+      ]
+    }).select('-password');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// UPDATE
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    // User can only edit himself, unless he is admin
+    if (req.user.id !== req.params.id && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Brak uprawnień' });
+    }
+    
+    // Not allowed to switch roles, unles he is admin
+    if (req.body.role && req.user.role !== 'admin') {
+      delete req.body.role;
+    }
+    
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+    }
     res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// DELETE (admin only)
+router.delete('/:id', authMiddleware, roleMiddleware('admin'), async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
+    }
+    res.json({ message: 'Użytkownik usunięty', user: { id: user._id, username: user.username } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
