@@ -7,11 +7,14 @@ const Product = require('./models/product.js')
 
 const app = express();
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({extended: false})) //otherwise we can't add form urlencoded way
 app.use(cookieParser());
 
+// middleware
+app.use(express.json());
+app.use(express.urlencoded({extended: false})) //otherwise we can't add form url-encoded way
 
+// routes
+app.use('/api/products', productRoute)
 
 
 app.get('/', (req, res) => {
