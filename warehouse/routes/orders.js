@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
-const { authMiddleware, roleMiddleware } = require('../middleware/auth');
+const { keycloak } = require('../server');  // ← ZMIANA
 
 // CREATE
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', keycloak.protect(), async (req, res) => {  // ← ZMIANA
   try {
     const order = new Order(req.body);
     await order.save();
@@ -15,7 +15,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // READ - all
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', keycloak.protect(), async (req, res) => {  // ← ZMIANA
   try {
     const orders = await Order.find().populate('products.product');
     res.json(orders);
@@ -25,7 +25,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // READ - one
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', keycloak.protect(), async (req, res) => {  // ← ZMIANA
   try {
     const order = await Order.findById(req.params.id).populate('products.product');
     if (!order) {
@@ -38,7 +38,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 });
 
 // SEARCH
-router.get('/search/:pattern', authMiddleware, async (req, res) => {
+router.get('/search/:pattern', keycloak.protect(), async (req, res) => {  // ← ZMIANA
   try {
     const pattern = req.params.pattern;
     const orders = await Order.find({
@@ -55,7 +55,7 @@ router.get('/search/:pattern', authMiddleware, async (req, res) => {
 });
 
 // UPDATE
-router.put('/:id', authMiddleware, roleMiddleware('admin', 'moderator'), async (req, res) => {
+router.put('/:id', keycloak.protect('realm:moderator'), async (req, res) => {  // ← ZMIANA
   try {
     const order = await Order.findByIdAndUpdate(
       req.params.id,
@@ -72,7 +72,7 @@ router.put('/:id', authMiddleware, roleMiddleware('admin', 'moderator'), async (
 });
 
 // DELETE
-router.delete('/:id', authMiddleware, roleMiddleware('admin'), async (req, res) => {
+router.delete('/:id', keycloak.protect('realm:admin'), async (req, res) => {  // ← ZMIANA
   try {
     const order = await Order.findByIdAndDelete(req.params.id);
     if (!order) {

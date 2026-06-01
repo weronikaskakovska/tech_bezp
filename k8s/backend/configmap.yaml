@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: warehouse
+data:
+  PORT: "3000"
+  MQTT_BROKER: "mqtt://test.mosquitto.org:1883"
+  MONGO_HOST: "mongo-service"
+  MONGO_PORT: "27017"
+  MONGO_DB: "warehousedb"
+  KEYCLOAK_URL: "http://keycloak-service:8080"
+  KEYCLOAK_REALM: "warehouse"
+  KEYCLOAK_CLIENT_ID: "warehouse-backend"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"

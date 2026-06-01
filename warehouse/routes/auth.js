@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { authMiddleware } = require('../middleware/auth');
+const { keycloak } = require('../server');
 
 // Register
 router.post('/register', async (req, res) => {

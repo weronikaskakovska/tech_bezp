@@ -8,11 +8,15 @@ const http = require('http');
 const logger = require('./middleware/logger');
 const mqttService = require('./services/mqtt');
 
+// ── NOWE: Keycloak + sesje ──────────────────────────────────────────────────
+const KeycloakConnect = require('keycloak-connect');
+const session = require('express-session');
+// ───────────────────────────────────────────────────────────────────────────
+
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 app.use(express.static('public'));
-
 
 // middleware
 app.use(express.json());
@@ -27,6 +31,55 @@ app.use(logger);
 // Static files (html client)
 app.use(express.static('public'));
 
+// ── NOWE: konfiguracja sesji (wymagana przez Keycloak) ──────────────────────
+const memoryStore = new session.MemoryStore();
+app.use(session({
+  secret: process.env.JWT_SECRET || 'session-secret',
+  resave: false,
+  saveUninitialized: true,
+  store: memoryStore
+}));
+
+// ── NOWE: konfiguracja Keycloak ─────────────────────────────────────────────
+//
+// Co to jest Keycloak? To osobny serwer który zajmuje się logowaniem.
+// Zamiast sprawdzać hasła samodzielnie, aplikacja pyta Keycloak:
+// "hej, czy ten użytkownik jest zalogowany i jaką ma rolę?"
+//
+const keycloak = new KeycloakConnect({ store: memoryStore }, {
+  realm: process.env.KEYCLOAK_REALM || 'warehouse',
+  'auth-server-url': process.env.KEYCLOAK_URL || 'http://localhost:8080',
+  resource: process.env.KEYCLOAK_CLIENT_ID || 'warehouse-backend',
+  credentials: {
+    secret: process.env.KEYCLOAK_CLIENT_SECRET || 'changeme'
+  },
+  'bearer-only': true   // backend tylko weryfikuje tokeny, nie przekierowuje
+});
+
+app.use(keycloak.middleware());
+// ───────────────────────────────────────────────────────────────────────────
+
+// ── NOWE: endpoint /health — niezabezpieczony ───────────────────────────────
+//
+// Dlaczego musi być niezabezpieczony?
+// Kubernetes co kilka sekund "puka" do /health żeby sprawdzić czy aplikacja żyje.
+// Gdyby wymagał logowania — Kubernetes myślałby że aplikacja padła i ją restartował.
+//
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'warehouse-backend',
+    version: '1.0.0'
+  });
+});
+
+// ── NOWE: endpoint /metrics — dla Prometheusa (bonus punktowy) ──────────────
+app.get('/metrics', (req, res) => {
+  res.set('Content-Type', 'text/plain');
+  res.send('# HELP warehouse_up Is the warehouse backend up\n# TYPE warehouse_up gauge\nwarehouse_up 1\n');
+});
+// ───────────────────────────────────────────────────────────────────────────
 
 // routes
 app.use('/api/auth', require('./routes/auth'));
@@ -75,7 +128,7 @@ wss.on('connection', (ws) => {
 });
 
 
-//Broadcast function to all WebSocket clients
+// Broadcast function to all WebSocket clients
 function broadcastToClients(data) {
   clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
@@ -124,11 +177,11 @@ app.get('/api', (req, res) => {
       products: '/api/products',
       orders: '/api/orders',
       suppliers: '/api/suppliers',
-      users: '/api/users'
+      users: '/api/users',
+      health: '/health'
     }
   });
 });
-
 
 
 // mongodb
@@ -149,4 +202,5 @@ mongoose.connect(process.env.MONGODB_URI)
         console.log("Database connection failed:", error);
     });
 
-module.exports = { app, server, broadcastToClients };
+// ── NOWE: eksportuj keycloak żeby routes mogły go używać ────────────────────
+module.exports = { app, server, broadcastToClients, keycloak };

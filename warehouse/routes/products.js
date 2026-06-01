@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
-const { authMiddleware, roleMiddleware } = require('../middleware/auth');
+const { keycloak } = require('../server');  // ← ZMIANA: zamiast authMiddleware/roleMiddleware
 
 //CREATE - only for admin/moderator
-router.post('/', authMiddleware, roleMiddleware('admin', 'moderator'), async (req, res) => {
+router.post('/', keycloak.protect('realm:moderator'), async (req, res) => {  // ← ZMIANA
   try {
     const product = new Product(req.body);
     await product.save();
@@ -15,7 +15,7 @@ router.post('/', authMiddleware, roleMiddleware('admin', 'moderator'), async (re
 });
 
 // READ - all products
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', keycloak.protect(), async (req, res) => {  // ← ZMIANA
   try {
     const products = await Product.find();
     res.json(products);
@@ -25,7 +25,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // READ - one product by id
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', keycloak.protect(), async (req, res) => {  // ← ZMIANA
   try {
     const product = await Product.findById(req.params.id);
     if (!product) {
@@ -38,7 +38,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 });
 
 // SEARCH - according to pattern
-router.get('/search/:pattern', authMiddleware, async (req, res) => {
+router.get('/search/:pattern', keycloak.protect(), async (req, res) => {  // ← ZMIANA
   try {
     const pattern = req.params.pattern;
     const products = await Product.find({
@@ -55,7 +55,7 @@ router.get('/search/:pattern', authMiddleware, async (req, res) => {
 });
 
 // UPDATE - only admin/moderator
-router.put('/:id', authMiddleware, roleMiddleware('admin', 'moderator'), async (req, res) => {
+router.put('/:id', keycloak.protect('realm:moderator'), async (req, res) => {  // ← ZMIANA
   try {
     const product = await Product.findByIdAndUpdate(
       req.params.id,
@@ -72,7 +72,7 @@ router.put('/:id', authMiddleware, roleMiddleware('admin', 'moderator'), async (
 });
 
 // DELETE - only admin
-router.delete('/:id', authMiddleware, roleMiddleware('admin'), async (req, res) => {
+router.delete('/:id', keycloak.protect('realm:admin'), async (req, res) => {  // ← ZMIANA
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
