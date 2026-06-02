@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/order');
-const { keycloak } = require('../server');  // ← ZMIANA
+const { keycloak } = require('../keycloak');
 
 // CREATE
 router.post('/', keycloak.protect(), async (req, res) => {  // ← ZMIANA

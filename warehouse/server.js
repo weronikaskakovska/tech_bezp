@@ -28,6 +28,14 @@ app.use(logger);
 // Static files (html client)
 app.use(express.static('public'));
 
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'warehouse-backend',
+    version: '1.0.0'
+  });
+});
 
 app.use(keycloak.middleware());
 
@@ -38,14 +46,6 @@ app.use(keycloak.middleware());
 // Kubernetes co kilka sekund "puka" do /health żeby sprawdzić czy aplikacja żyje.
 // Gdyby wymagał logowania — Kubernetes myślałby że aplikacja padła i ją restartował.
 //
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    service: 'warehouse-backend',
-    version: '1.0.0'
-  });
-});
 
 // ── NOWE: endpoint /metrics — dla Prometheusa (bonus punktowy) ──────────────
 app.get('/metrics', (req, res) => {

@@ -4,7 +4,6 @@ metadata:
   name: keycloak-secrets
   namespace: warehouse
 type: Opaque
-# base64 of: admin / adminpassword
 data:
   KEYCLOAK_ADMIN: YWRtaW4=
   KEYCLOAK_ADMIN_PASSWORD: YWRtaW5wYXNzd29yZA==
@@ -58,16 +57,16 @@ spec:
             httpGet:
               path: /realms/master
               port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 15
-            failureThreshold: 10
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 15
           livenessProbe:
             httpGet:
-              path: /health/live
+              path: /realms/master
               port: 8080
-            initialDelaySeconds: 60
+            initialDelaySeconds: 120
             periodSeconds: 30
-            failureThreshold: 5
+            failureThreshold: 10
           resources:
             requests:
               cpu: "300m"

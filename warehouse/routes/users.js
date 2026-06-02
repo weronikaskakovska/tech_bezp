@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
-const { keycloak } = require('../server');  // ← ZMIANA
+const { keycloak } = require('../keycloak');
 
 // CREATE - rejestracja jest w auth.js
 

@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/product');
-const { keycloak } = require('../server');  // ← ZMIANA: zamiast authMiddleware/roleMiddleware
-
+const { keycloak } = require('../keycloak');
 //CREATE - only for admin/moderator
 router.post('/', keycloak.protect('realm:moderator'), async (req, res) => {  // ← ZMIANA
   try {

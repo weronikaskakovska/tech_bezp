@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Supplier = require('../models/supplier');
-const { keycloak } = require('../server');  // ← ZMIANA
+const { keycloak } = require('../keycloak');
 
 // CREATE
 router.post('/', keycloak.protect('realm:moderator'), async (req, res) => {  // ← ZMIANA
