@@ -119,8 +119,17 @@ jobs:
           kubectl apply -f k8s/ingress.yaml
           kubectl apply -f k8s/networkpolicy.yaml
 
-      # Wypisujemy status podów w celach weryfikacji w logach GitHub Actions
+      # 1. NAJPIERW DAJEMY KLASTROWI CZAS NA URUCHOMIENIE (Nowy krok)
+      - name: Wait for pods to initialize
+        run: |
+          echo "Czekam 75 sekund na pobranie obrazów z internetu i start kontenerów..."
+          sleep 75
+
+      # 2. DOPIERO TERAZ SPRAWDZAMY STATUS (Twój zmodyfikowany krok)
       - name: Verify pods status
         run: |
           echo "=== PODY W NAMESPACE WAREHOUSE ==="
           kubectl get pods -n warehouse
+          
+          echo "=== SERWISY W NAMESPACE WAREHOUSE ==="
+          kubectl get svc -n warehouse
