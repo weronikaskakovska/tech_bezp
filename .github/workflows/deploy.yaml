@@ -97,6 +97,9 @@ jobs:
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
+      - name: Debug kubeconfig
+        run: |
+          cat $HOME/.kube/config
 
       - name: Set image tag in deployment
         run: |
