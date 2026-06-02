@@ -11,7 +11,9 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=builder /app/node_modules ./node_modules
 COPY . .
 
-RUN chown -R appuser:appgroup /app
+# Utwórz folder logs z właściwymi uprawnieniami PRZED zmianą użytkownika
+RUN mkdir -p /app/logs && chown -R appuser:appgroup /app
+
 USER appuser
 
 EXPOSE 3000

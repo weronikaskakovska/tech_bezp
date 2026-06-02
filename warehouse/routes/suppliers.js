@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Supplier = require('../models/Supplier');
+const Supplier = require('../models/supplier');
 const { keycloak } = require('../server');  // ← ZMIANA
 
 // CREATE

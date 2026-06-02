@@ -8,10 +8,7 @@ const http = require('http');
 const logger = require('./middleware/logger');
 const mqttService = require('./services/mqtt');
 
-// ── NOWE: Keycloak + sesje ──────────────────────────────────────────────────
-const KeycloakConnect = require('keycloak-connect');
-const session = require('express-session');
-// ───────────────────────────────────────────────────────────────────────────
+const { keycloak, memoryStore } = require('./keycloak');
 
 const app = express();
 const server = http.createServer(app);
@@ -31,33 +28,9 @@ app.use(logger);
 // Static files (html client)
 app.use(express.static('public'));
 
-// ── NOWE: konfiguracja sesji (wymagana przez Keycloak) ──────────────────────
-const memoryStore = new session.MemoryStore();
-app.use(session({
-  secret: process.env.JWT_SECRET || 'session-secret',
-  resave: false,
-  saveUninitialized: true,
-  store: memoryStore
-}));
-
-// ── NOWE: konfiguracja Keycloak ─────────────────────────────────────────────
-//
-// Co to jest Keycloak? To osobny serwer który zajmuje się logowaniem.
-// Zamiast sprawdzać hasła samodzielnie, aplikacja pyta Keycloak:
-// "hej, czy ten użytkownik jest zalogowany i jaką ma rolę?"
-//
-const keycloak = new KeycloakConnect({ store: memoryStore }, {
-  realm: process.env.KEYCLOAK_REALM || 'warehouse',
-  'auth-server-url': process.env.KEYCLOAK_URL || 'http://localhost:8080',
-  resource: process.env.KEYCLOAK_CLIENT_ID || 'warehouse-backend',
-  credentials: {
-    secret: process.env.KEYCLOAK_CLIENT_SECRET || 'changeme'
-  },
-  'bearer-only': true   // backend tylko weryfikuje tokeny, nie przekierowuje
-});
 
 app.use(keycloak.middleware());
-// ───────────────────────────────────────────────────────────────────────────
+
 
 // ── NOWE: endpoint /health — niezabezpieczony ───────────────────────────────
 //
