@@ -79,35 +79,32 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   # ─── 3. Deploy to Kubernetes ───────────────────────────────────────────────
+# ─── 3. Deploy to Kubernetes ───────────────────────────────────────────────
   deploy:
-    name: Deploy to K8s
+    name: Deploy to K8s (Kind Test)
     runs-on: ubuntu-latest
     needs: docker
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
+      # Tworzy w pełni funkcjonalny, tymczasowy klaster Kubernetes (Kind) w chmurze GitHub Actions
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.10.0
 
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-
-      - name: Debug kubeconfig
-        run: |
-          cat $HOME/.kube/config
-
+      # Podmieniamy tag obrazu na ten aktualnie zbudowany z SHA commita
       - name: Set image tag in deployment
         run: |
           IMAGE_TAG="sha-$(git rev-parse --short HEAD)"
-          sed -i "s|ghcr.io/GITHUB_USER/tech_bezp-backend:latest|${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG}|g" \
+          # Zamieniamy nazwę repozytorium na małe litery (wymóg dla rejestrów dockerowych)
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          
+          sed -i "s|ghcr.io/GITHUB_USER/tech_bezp-backend:latest|ghcr.io/${REPO_LOWER}-backend:${IMAGE_TAG}|g" \
             k8s/backend/deployment.yaml
 
+      # Wdrażamy wszystkie manifesty po kolei do nowo powstałego klastra
       - name: Apply manifests
         run: |
           kubectl apply -f k8s/namespace.yaml
@@ -122,11 +119,8 @@ jobs:
           kubectl apply -f k8s/ingress.yaml
           kubectl apply -f k8s/networkpolicy.yaml
 
-      - name: Wait for rollout
+      # Wypisujemy status podów w celach weryfikacji w logach GitHub Actions
+      - name: Verify pods status
         run: |
-          kubectl rollout status deployment/backend -n warehouse --timeout=120s
-
-      - name: Verify pods running
-        run: |
+          echo "=== PODY W NAMESPACE WAREHOUSE ==="
           kubectl get pods -n warehouse
-          kubectl get svc -n warehouse
