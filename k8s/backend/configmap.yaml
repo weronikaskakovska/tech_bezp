@@ -1,3 +1,4 @@
+#konfiguracja - niejawne dane - jak plik ustawień — adresy innych serwisów, porty; nie ma haseł
 apiVersion: v1
 kind: ConfigMap
 metadata:

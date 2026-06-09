@@ -37,37 +37,36 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(401).json({ error: 'Nieprawidłowe dane logowania' });
-    }
-    
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Nieprawidłowe dane logowania' });
-    }
-    
-    const token = jwt.sign(
-      { id: user._id, username: user.username, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+
+    const params = new URLSearchParams();
+    params.append('grant_type', 'password');
+    params.append('client_id', 'warehouse-frontend');
+    params.append('username', username);
+    params.append('password', password);
+
+    const response = await fetch(
+      `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
+      { method: 'POST', body: params }
     );
-    
-    // Setting cookies with token
-    res.cookie('token', token, {
+
+    const data = await response.json();
+    console.log('Keycloak response status:', response.status);
+    console.log('Keycloak response data:', JSON.stringify(data));
+
+    if (!response.ok) {
+      return res.status(401).json({ error: 'Nieprawidłowe dane logowania' });
+    }
+
+    res.cookie('token', data.access_token, {
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000 // 24h
+      maxAge: 24 * 60 * 60 * 1000
     });
-    
+
     res.json({
       message: 'Zalogowano pomyślnie',
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        role: user.role
-      }
+      token: data.access_token,
+      refresh_token: data.refresh_token,
+      user: { username }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

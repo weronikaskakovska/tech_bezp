@@ -1,3 +1,5 @@
+#Keycloak też jest StatefulSet bo trzyma konfigurację ról, użytkowników, realm. Też potrzebuje trwałego dysku.
+
 apiVersion: v1
 kind: Secret
 metadata:

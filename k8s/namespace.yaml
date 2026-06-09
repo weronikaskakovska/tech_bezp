@@ -4,3 +4,7 @@ metadata:
   name: warehouse
   labels:
     app.kubernetes.io/managed-by: kubectl
+
+# jak "folder" w Kubernetes — wszystkie komponenty 
+# siedzą w przestrzeni nazw "warehouse" żeby nie mieszały się
+# z innymi aplikacjami na tym samym klastrze

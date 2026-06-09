@@ -1,3 +1,5 @@
+//konfiguracja OAuth 2.0
+
 const KeycloakConnect = require('keycloak-connect');
 const session = require('express-session');
 
@@ -10,7 +12,7 @@ const keycloak = new KeycloakConnect({ store: memoryStore }, {
   credentials: {
     secret: process.env.KEYCLOAK_CLIENT_SECRET || 'changeme'
   },
-  'bearer-only': true
+  'bearer-only': true  // // backend tylko weryfikuje tokeny, nie loguje
 });
 
 module.exports = { keycloak, memoryStore };

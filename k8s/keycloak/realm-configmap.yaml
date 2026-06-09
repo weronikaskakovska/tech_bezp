@@ -1,3 +1,9 @@
+#gotowa konfiguracja Keycloaka — definicja realm (domeny bezpieczeństwa) warehouse z:
+#rolami (admin, moderator, user)
+#klientem warehouse-backend
+#włączonym PKCE
+
+
 apiVersion: v1
 kind: ConfigMap
 metadata:

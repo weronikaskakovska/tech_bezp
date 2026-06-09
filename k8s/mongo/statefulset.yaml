@@ -1,3 +1,7 @@
+#MongoDB działa jako StatefulSet a nie Deployment, bo baza danych potrzebuje
+#stałej tożsamości, trwałego dysku (PersistentVolumeClaim — dane nie znikają po restarcie)
+
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -67,14 +71,15 @@ spec:
           volumeMounts:
             - name: mongo-data
               mountPath: /data/db
-  volumeClaimTemplates:
+  volumeClaimTemplates:  # zarezerwuj dysk dla danych
+
     - metadata:
         name: mongo-data
       spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 2Gi
+            storage: 2Gi #2 gigabajty miejsca
 ---
 apiVersion: v1
 kind: Service

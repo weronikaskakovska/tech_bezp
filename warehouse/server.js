@@ -1,3 +1,11 @@
+//Tworzy serwer HTTP (Express)
+//Podłącza middleware (keycloak, cors, logger)
+//Rejestruje wszystkie endpointy (/api/products, /api/orders itd.)
+//Łączy się z MongoDB
+//Uruchamia WebSocket (powiadomienia w czasie rzeczywistym)
+//Łączy się z MQTT (broker wiadomości IoT)
+
+
 require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
@@ -7,6 +15,7 @@ const cookieParser = require('cookie-parser');
 const http = require('http');
 const logger = require('./middleware/logger');
 const mqttService = require('./services/mqtt');
+const session = require('express-session');
 
 const { keycloak, memoryStore } = require('./keycloak');
 
@@ -36,6 +45,15 @@ app.get('/health', (req, res) => {
     version: '1.0.0'
   });
 });
+
+app.use(session({
+  secret: process.env.JWT_SECRET || 'some-secret',
+  resave: false,
+  saveUninitialized: true,
+  store: memoryStore
+}));
+
+app.use(keycloak.middleware());
 
 app.use(keycloak.middleware());
 

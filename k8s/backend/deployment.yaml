@@ -1,3 +1,9 @@
+#mówi Kubernetsowi uruchom 2 kopie backendu
+#jeśli jedna padnie druga nadal działa
+#używaj obrazu warehouse-backend:local
+#przy aktualizacji używaj rolling update — najpierw uruchom nową wersję, dopiero potem wyłącz starą
+
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,12 +12,12 @@ metadata:
   labels:
     app: backend
 spec:
-  replicas: 2
+  replicas: 2  # 2 kopie
   selector:
     matchLabels:
       app: backend
   strategy:
-    type: RollingUpdate
+    type: RollingUpdate  # aktualizacja bez przestojów
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
@@ -28,8 +34,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
-      initContainers:
-        - name: wait-for-mongo
+      initContainers:   #uruchom PRZED głównym kontenerem
+        - name: wait-for-mongo  #czekaj aż MongoDB będzie gotowe
           image: busybox:1.36
           securityContext:
             runAsNonRoot: true
@@ -45,10 +51,10 @@ spec:
                 sleep 3
               done
               echo "MongoDB is ready!"
-        - name: wait-for-keycloak
+        - name: wait-for-keycloak  #czekaj aż Keycloak będzie gotowy
           image: busybox:1.36
           securityContext:
-            runAsNonRoot: true
+            runAsNonRoot: true   #nie uruchamiaj jako root (bezpieczeństwo)
             runAsUser: 1000
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -126,24 +132,24 @@ spec:
                 configMapKeyRef:
                   name: backend-config
                   key: REDIS_PORT
-          readinessProbe:
+          readinessProbe:   #czy aplikacja jest gotowa
             httpGet:
-              path: /health
+              path: /health  #Kubernetes pyta /health co 10 sek
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 10
             failureThreshold: 3
-          livenessProbe:
+          livenessProbe:   #czy aplikacja żyje
             httpGet:
-              path: /health
+              path: /health  # jeśli nie odpowie — restart
               port: 3000
             initialDelaySeconds: 30
             periodSeconds: 20
             failureThreshold: 3
           resources:
             requests:
-              cpu: "100m"
+              cpu: "100m"    #minimalne zasoby
               memory: "128Mi"
             limits:
-              cpu: "500m"
+              cpu: "500m"    #maksymalne zasoby
               memory: "512Mi"
